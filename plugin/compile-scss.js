@@ -35,9 +35,9 @@ Plugin.registerSourceHandler("scss", function (compileStep) {
     scssOptions = loadJSONFile(optionsFile);
   }
 
-  var options = _.extend({}, scssOptions, {
-    sourceComments: 'none'
-  });
+  var options = _.extend({
+    sourceComments: "map",
+  }, scssOptions);
 
   options.file = compileStep._fullInputPath;
 
@@ -62,10 +62,29 @@ Plugin.registerSourceHandler("scss", function (compileStep) {
     });
     return;
   }
-  compileStep.addStylesheet({
-    path: compileStep.inputPath + ".css",
-    data: css
-  });
+
+  var filename = compileStep.inputPath;
+
+  // ToDo: ensure outputPath exists
+  if (options.outputPath) {
+    var ext = path.extname(filename);
+    var re = new RegExp(ext + "$", "i");
+
+    filename = filename.replace(re, "");
+    filename = options.flatten ? path.basename(filename) : filename;
+    filename = path.join(options.outputPath, filename) + ".css";
+
+    fs.writeFileSync(filename, css);
+  } else {
+    filename = filename + ".css";
+  }
+
+  if (options.autoAdd) {
+      compileStep.addStylesheet({
+        path: filename,
+        data: css
+      });
+  }
 });
 
 Plugin.registerSourceHandler("scssimport", function () {
